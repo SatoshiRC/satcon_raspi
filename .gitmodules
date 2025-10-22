@@ -1,0 +1,6 @@
+[submodule "ICM20948"]
+	path = ICM20948
+	url = git@github.com:SatoshiRC/ICM20948.git
+[submodule "Vector3D"]
+	path = Vector3D
+	url = git@github.com:SatoshiRC/Vector3D.git
