@@ -5,6 +5,7 @@
 #include <atomic>
 #include <thread>
 #include <array>
+#include <memory>
 
 #include "ICM20948/ICM20948_raspi.h"
 #include "ICM20948_USER.h"
@@ -12,6 +13,8 @@
 
 static std::atomic<bool> g_stop{false};
 void onSignal(int){ g_stop = true; }
+
+int measure(std::shared_ptr<GPIOInterrupt> irq);
 
 int main(){
 	// Configure INT pin connection
@@ -37,7 +40,7 @@ int main(){
 
 	// Set up GPIO interrupt on the INT pin
 	GPIOInterrupt irq(gpiochip, INT_GPIO_BCM, GPIOInterrupt::Edge::Rising);
-	if (!irq.start([&](bool rising){
+	irq.setCallback([&](bool rising){
 		if (!rising) return; // handle only rising edge
 		// Read IMU data-ready status and then fetch data
 		imu->readIMU();
@@ -45,15 +48,17 @@ int main(){
 		imu->getAccel(accel);
 		imu->getGyro(gyro);
 		std::cout << "INT: Accel[g]=" << accel[0] << "," << accel[1] << "," << accel[2]
-				<< " Gyro[rad/s]=" << gyro[0] << "," << gyro[1] << "," << gyro[2] << std::endl;
-	})){
-		std::cerr << "Failed to start GPIO interrupt (libgpiod). Ensure libgpiod is installed and run with proper permissions." << std::endl;
-		return 1;
-	}
+				  << " Gyro[rad/s]=" << gyro[0] << "," << gyro[1] << "," << gyro[2] << std::endl;
+	});
+	std::shared_ptr<GPIOInterrupt> pIrq = std::make_shared<GPIOInterrupt>(irq);
 
 	// Handle Ctrl+C to exit
 	std::signal(SIGINT, onSignal);
 	std::cout << "Waiting for interrupts on GPIO" << INT_GPIO_BCM << " (Ctrl+C to exit)..." << std::endl;
+
+	std::thread measureThread(measure, pIrq);
+	measureThread.detach();
+
 	while (!g_stop.load()) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	}
@@ -61,4 +66,14 @@ int main(){
 	irq.stop();
 	imu->end();
 	return 0;
+}
+
+int measure(std::shared_ptr<GPIOInterrupt> irq){
+	std::cout << "Prease press \"start\" " << std::endl;
+	std::string str;
+	std::cin >> str;
+	if(str == "start"){
+		irq->start();
+		usleep(18*1000*1000);
+	}
 }

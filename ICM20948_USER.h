@@ -12,6 +12,7 @@
 #include "Vector3D/Vector3D.h"
 #include "stdexcept"
 #include <array>
+#include <unistd.h>
 
 #include <fcntl.h>
 #include <unistd.h>

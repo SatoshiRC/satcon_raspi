@@ -13,7 +13,7 @@ void ICM20948_USER::confirmConnection(){
 		// message("Error : Icm20948 is not detected \n retrying...",2);
 		icm20948->changeUserBank(ICM20948::REGISTER::BANK::BANK0);
 		icm20948->reset();
-		usleep(1000 * 100);
+		usleep(100*1000);
 		whoami = icm20948->whoami();
 	}
 	if(whoami!=0xea){
@@ -23,9 +23,9 @@ void ICM20948_USER::confirmConnection(){
 
 void ICM20948_USER::init(){
     icm20948->reset();
-    usleep(1000 * 100);
+    usleep(100*1000);
 	icm20948->pwrmgmt1(0x01);
-	usleep(1000 * 100);
+	usleep(100*1000);
 
     icm20948->accelConfig(ICM20948::AccelSensitivity::SENS_16G,true,1);
     icm20948->gyroConfig(ICM20948::GyroSensitivity::SENS_2000, true, 1);

@@ -20,7 +20,9 @@ public:
     ~GPIOInterrupt();
 
     // Starts background thread that waits for edge events and calls cb(edgeIsRising)
+    bool start();
     bool start(const std::function<void(bool /*rising*/)> &cb);
+    void setCallback(const std::function<void(bool /*rising*/)> &cb);
 
     // Stops background thread and releases resources
     void stop();

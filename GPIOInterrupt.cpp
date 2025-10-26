@@ -43,13 +43,22 @@ void GPIOInterrupt::releaseLine() {
     }
 }
 
-bool GPIOInterrupt::start(const std::function<void(bool)> &cb) {
+bool GPIOInterrupt::start() {
     if (running.load()) return true;
-    callback = cb;
     if (!requestLine()) return false;
     running = true;
     worker = std::thread(&GPIOInterrupt::run, this);
     return true;
+}
+
+bool GPIOInterrupt::start(const std::function<void(bool)> &cb) {
+    setCallback(cb);
+    start();
+}
+
+void setCallback(const std::function<void(bool /*rising*/)> &cb){
+    if (running.load()) return true;
+    callback = cb;
 }
 
 void GPIOInterrupt::stop() {
