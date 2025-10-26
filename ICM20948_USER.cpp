@@ -11,11 +11,9 @@ void ICM20948_USER::confirmConnection(){
     uint8_t whoami = icm20948->whoami();
 	for(uint8_t n=0; n<10 && whoami!=0xea; n++){
 		// message("Error : Icm20948 is not detected \n retrying...",2);
-		HAL_I2C_DeInit(icm20948->getI2CHandller());
-		HAL_I2C_Init(icm20948->getI2CHandller());
 		icm20948->changeUserBank(ICM20948::REGISTER::BANK::BANK0);
 		icm20948->reset();
-		HAL_Delay(100);
+		usleep(1000 * 100);
 		whoami = icm20948->whoami();
 	}
 	if(whoami!=0xea){
@@ -25,9 +23,9 @@ void ICM20948_USER::confirmConnection(){
 
 void ICM20948_USER::init(){
     icm20948->reset();
-    HAL_Delay(100);
+    usleep(1000 * 100);
 	icm20948->pwrmgmt1(0x01);
-	HAL_Delay(100);
+	usleep(1000 * 100);
 
     icm20948->accelConfig(ICM20948::AccelSensitivity::SENS_16G,true,1);
     icm20948->gyroConfig(ICM20948::GyroSensitivity::SENS_2000, true, 1);

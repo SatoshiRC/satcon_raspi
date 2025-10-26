@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.13)
 project(satcon_raspi CXX)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(satcon_raspi
     satcon_raspi.cpp
     GPIOInterrupt.cpp
+    ICM20948_USER.cpp
     ICM20948/ICM20948.cpp
     ICM20948/ICM20948_raspi.cpp)
 

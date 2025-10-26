@@ -8,15 +8,20 @@
 #ifndef ICM20948_ICM20948_USER_H_
 #define ICM20948_ICM20948_USER_H_
 
-#include "ICM20948/ICM20948_raspi.h"
+#include "ICM20948/ICM20948.h"
 #include "Vector3D/Vector3D.h"
 #include "stdexcept"
 #include <array>
 
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <linux/i2c-dev.h>
+
 
 class ICM20948_USER{
 public:
-	ICM20948_USER(ICM20948_HAL *icm20948):icm20948(icm20948){
+	ICM20948_USER(ICM20948 *icm20948):icm20948(icm20948){
 		__isCalibrated = false;
 	}
 
@@ -33,7 +38,7 @@ public:
 	void update(){};
 
 private:
-	ICM20948_HAL *icm20948;
+	ICM20948 *icm20948;
 	bool __isCalibrated;
 	Vector3D<double> accelAverage={-0.04,-0.05,-0.0633};
 	Vector3D<double> gyroAverage={};
