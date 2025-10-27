@@ -16,13 +16,13 @@ struct Frame {
 };
 
 // Parse a single frame from buffer[offset..]. Throws std::runtime_error on error.
-Frame parse_frame(const std::vector<uint8_t>& buf, size_t offset = 0, bool little_endian = true);
+Frame parse_frame(const std::vector<uint8_t>& buf, size_t offset = 0, bool little_endian = false);
 
 // Scan buffer for next full frame. If found, consumes bytes from the front of
 // the buffer and returns the Frame. If not enough bytes, returns std::nullopt.
-std::optional<Frame> find_and_parse(std::vector<uint8_t>& buffer, bool little_endian = true);
+std::optional<Frame> find_and_parse(std::vector<uint8_t>& buffer, bool little_endian = false);
 
 // Utility used by tests
-std::vector<uint8_t> encode_frame(const Frame& f, bool little_endian = true);
+std::vector<uint8_t> encode_frame(const Frame& f, bool little_endian = false);
 
 } // namespace satcon

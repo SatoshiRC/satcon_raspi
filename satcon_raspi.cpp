@@ -51,7 +51,7 @@ int main(){
     cfsetispeed(&tio, B115200);
     cfsetospeed(&tio, B115200);
     tio.c_cflag |= CLOCAL | CREAD;
-	tio.c_cc[VTIME] = 10;
+	tio.c_cc[VTIME] = 30;
     tcsetattr(fd, TCSANOW, &tio);
 
 	// Create IMU instance
@@ -82,7 +82,7 @@ int main(){
 		icm20948User.getIMU(accel, gyro);
 		// std::cout << "INT: Accel[g]=" << accel[0] << "," << accel[1] << "," << accel[2]
 		// 		  << " Gyro[rad/s]=" << gyro[0] << "," << gyro[1] << "," << gyro[2] << std::endl;
-		*imuOfs << accel[0] << "," << accel[1] << "," << accel[2]
+		*imuOfs << accel[0] << "," << accel[1] << "," << accel[2] << ","
 				  << gyro[0] << "," << gyro[1] << "," << gyro[2] << std::endl;
 		imuOfs->flush();
 	});
@@ -106,7 +106,7 @@ int main(){
 
 int measure(std::shared_ptr<GPIOInterrupt> irq, std::shared_ptr<std::ofstream> imuOfs, int uart_fd){
 	while(true){
-		std::cout << "Prease press \"start\" " << std::endl;
+		std::cout << "enter \"start\" >> ";
 		std::string str;
 		std::cin >> str;
 
@@ -118,7 +118,7 @@ int measure(std::shared_ptr<GPIOInterrupt> irq, std::shared_ptr<std::ofstream> i
 		std::tm tm{};
 		localtime_r(&t, &tm);
 		std::ostringstream oss;
-		oss << std::put_time(&tm, "%H_%M_%S");
+		oss << std::put_time(&tm, "%m_%d__%H_%M_%S");
 		std::string nowStr = oss.str();
 		dir /= nowStr;
 		auto res = std::filesystem::create_directories(dir);
@@ -127,19 +127,17 @@ int measure(std::shared_ptr<GPIOInterrupt> irq, std::shared_ptr<std::ofstream> i
 		}
 		imuOfs->open(dir/"imu.csv");
 		std::ofstream ofs(dir/"radioImu.csv");
+		std::ofstream bofs(dir/"debug.csv");
 
 		*imuOfs << "ax, ay, az, gx, gy, gz" << std::endl;
 		ofs << "ax, ay, az, gx, gy, gz" << std::endl;
-
 
 		if(str == "start"){
 			intCounter = 0;
 			std::cout << "start task" << std::endl;
 
-			std::cout << uart_fd << std::endl;
 			std::string message = "start"; // 送信する文字列
         	ssize_t bytes_written = write(uart_fd, message.c_str(), message.length());
-			std::cout << "written bytes : " << bytes_written << std::endl;
 			
 			irq->start();
 			usleep(18*1000*1000);
@@ -147,16 +145,36 @@ int measure(std::shared_ptr<GPIOInterrupt> irq, std::shared_ptr<std::ofstream> i
 			continue;
 		}
 		irq->stop();
+		std::string message = "wait"; // 送信する文字列
+		write(uart_fd, message.c_str(), message.length());
 		std::cout << "finish task, IMU interrupt : " << intCounter  << std::endl;
+		
+		while(true){
+			std::vector<uint8_t> readbuf(128);
+			volatile ssize_t n = read(uart_fd, readbuf.data(), readbuf.size());
+			if(n <= 0){
+				break;
+			}
+		}
 
-		std::string message = "transmit"; // 送信する文字列
-		ssize_t bytes_written = write(uart_fd, message.c_str(), message.length());
-
+		message = "transmit"; // 送信する文字列
+		write(uart_fd, message.c_str(), message.length());
+		std::cout << "Receive data via radio module" << std::endl;
 		std::vector<uint8_t> readbuf(128);
 		std::vector<uint8_t> buffer;
+		auto lastReceive = std::chrono::system_clock::now();
 		while (true) {
 			ssize_t n = read(uart_fd, readbuf.data(), readbuf.size());
 			if (n > 0) {
+				lastReceive = std::chrono::system_clock::now();
+				for(uint8_t i=0; i<n; i++){
+					if(readbuf[i] == 0x7f){
+						bofs << std::to_string(readbuf[i]) << std::endl;
+					}else{
+						bofs << std::to_string(readbuf[i]) << ", ";
+					}
+				}
+				bofs.flush();
 				buffer.insert(buffer.end(), readbuf.begin(), readbuf.begin() + n);
 				while (true) {
 					auto f = satcon::find_and_parse(buffer);
@@ -167,12 +185,16 @@ int measure(std::shared_ptr<GPIOInterrupt> irq, std::shared_ptr<std::ofstream> i
 				}
 			} else {
 				// no data
-				break;
+				auto now = std::chrono::system_clock::now();
+				if(std::chrono::duration_cast<std::chrono::milliseconds>(now - lastReceive).count() > 3000){
+					break;
+				}
 			}
 		}
 
 		imuOfs->close();
 		ofs.close();
+		std::cout << "finish" << std::endl;
 	}
 	return 0;
 }

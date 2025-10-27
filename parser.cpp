@@ -42,7 +42,11 @@ std::optional<Frame> find_and_parse(std::vector<uint8_t>& buffer, bool little_en
     if (idx > 0) {
         buffer.erase(buffer.begin(), buffer.begin() + idx);
     }
-    if (buffer.size() < FRAME_LEN) return std::nullopt;
+    if (buffer.size() < FRAME_LEN+1) return std::nullopt;
+    if (buffer[FRAME_LEN] != START_BYTE){
+        buffer.erase(buffer.begin());
+        return std::nullopt;
+    }
     try {
         Frame f = parse_frame(buffer, 0, little_endian);
         buffer.erase(buffer.begin(), buffer.begin() + FRAME_LEN);
