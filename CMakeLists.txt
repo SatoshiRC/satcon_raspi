@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(satcon_raspi
     satcon_raspi.cpp
     GPIOInterrupt.cpp
+    parser.cpp
     ICM20948_USER.cpp
     ICM20948/ICM20948.cpp
     ICM20948/ICM20948_raspi.cpp)

@@ -53,11 +53,11 @@ bool GPIOInterrupt::start() {
 
 bool GPIOInterrupt::start(const std::function<void(bool)> &cb) {
     setCallback(cb);
-    start();
+    return start();
 }
 
-void setCallback(const std::function<void(bool /*rising*/)> &cb){
-    if (running.load()) return true;
+void GPIOInterrupt::setCallback(const std::function<void(bool /*rising*/)> &cb){
+    if (running.load()) return;
     callback = cb;
 }
 

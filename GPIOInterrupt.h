@@ -7,6 +7,8 @@
 #include <atomic>
 #include <thread>
 #include <string>
+#include <filesystem>
+#include <fstream>
 
 struct gpiod_chip;
 struct gpiod_line;
